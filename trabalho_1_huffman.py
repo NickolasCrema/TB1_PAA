@@ -59,22 +59,25 @@ def readFile(f):
     buf = file.read()
     list = []
     flag = 0
-    list.append(Node(str('\0'), 0))
+    list.append(Node(str('@'), 0))
+    
     for symbol in buf:
-        if symbol == '\0':
+        if symbol == '\n':
+            # print('sim')
             for s in list:   #TODO ARRUMAR O BARRA N
-                if s.symbol == '\0':
+                if s.symbol == '@':
                     s.value+=1
                     break
                 break
             pass
-        flag = 0
-        for s in list:
-            if str(s.symbol) == str(symbol):
-                flag = 1
-                s.value+=1
-        if flag == 0:
-            list.append(Node(str(symbol), value=1))
+        else:
+            flag = 0
+            for s in list:
+                if str(s.symbol) == str(symbol):
+                    flag = 1
+                    s.value+=1
+            if flag == 0:
+                list.append(Node(str(symbol), value=1))
     file.close()
     print(list)
     return list
@@ -84,16 +87,22 @@ def compressFile(inputPath, outputPath, list):
     inputFile = open(inputPath, encoding='utf-8', mode='r')
     outputFile = open(outputPath, mode='wb')
     outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
+    header = {}
     for compressedSymbol in list:
-        outputFile.write(bytearray(str(compressedSymbol.symbol), encoding='utf-8') + ';'.encode('utf-8') + str(compressedSymbol.binary).encode('utf-8') + '\n'.encode('utf-8'))
+        outputFile.write(bytearray(str(compressedSymbol.symbol), encoding='utf-8') + '¨'.encode('utf-8') + str(compressedSymbol.binary).encode('utf-8') + '\n'.encode('utf-8'))
+        header[compressedSymbol.symbol] = compressedSymbol.binary
     buf = inputFile.read()
     for symbol in buf:
-        for compressedSymbol in list:
-            if str(symbol) == str(compressedSymbol.symbol):
-                binary = compressedSymbol.binary
+        if symbol == '\n':
+            binary = header['@']
+            binary = bytes(binary, encoding='utf-8')
+            outputFile.write(binary)
+        else:
+            if symbol in header:
+                binary = header[symbol]
                 binary = bytes(binary, encoding='utf-8')
                 outputFile.write(binary)
-                break
+
     inputFile.close()
     outputFile.close()
 
@@ -101,12 +110,14 @@ def uncompressFile(inputPath, outputPath):
     inputFile = open(inputPath, encoding='utf-8', mode='r')
     outputFile = open(outputPath, encoding='utf-8', mode='w')
     size = int(inputFile.readline())
-    header = []
+    header = {}
     aux = ''
     for i in range(size):
         aux = str(inputFile.readline())
-        aux = aux.split(';')
-        header.append(compressedSymbol(aux[0], aux[1]))
+        aux = aux.split('¨')
+        header[aux[1][:-1]] = aux[0]
+    for a in header:
+        print(a + ' : ' + header[a])
     # for i in header:
     #     print(i)
         # aux = bytes(i.symbol[2:], encoding='utf-8')
@@ -117,21 +128,36 @@ def uncompressFile(inputPath, outputPath):
     string = ''
     for symbol in buf:
         # print(string)
-        string = string + symbol
-        for compressed in header:
+        string = str(string) + str(symbol)
+        # print(string)
+        if string in header.keys():
+            # print(header[string])
             # print(str(compressed.binary) == str(string))
             # print(compressed.binary + " " + string)
-            if string == compressed.binary[:-1]:
-                # print(compressed.binary)
-                outputFile.write(compressed.symbol)
+            if str(header[string]) == '@':
+                outputFile.write('\n')
                 string = ''
-                break
+                print('sim')
+            else:
+                # print('nao')
+                outputFile.write(header[string])
+                string = ''
+            # print(header[string])
+
+            # if string == compressed.binary[:-1]:
+            #     # print(compressed.binary)
+            #     if compressed.symbol == '000000':
+            #         outputFile.write('\n')
+            #     else:
+            #         outputFile.write(compressed.symbol)
+            #     string = ''
+            #     break
     inputFile.close()
     outputFile.close()
 
-# a = readFile("reliquias.txt")
-# b = createNode(a)
-# list = []
-# processNode(b, '', list)
-# compressFile("reliquias.txt", "reliquiasComprimida.bin", list)
-uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt')
+a = readFile("reliquias2.txt")
+b = createNode(a)
+list = []
+processNode(b, '', list)
+compressFile("reliquias2.txt", "reliquias2Comprimida.bin", list)
+uncompressFile('reliquias2Comprimida.bin', 'reliquias2Descomprimidas.txt')
