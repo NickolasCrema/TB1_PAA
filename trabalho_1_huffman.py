@@ -60,10 +60,8 @@ def readFile(f):
     list = []
     flag = 0
     list.append(Node(str('@'), 0))
-    
     for symbol in buf:
         if symbol == '\n':
-            # print('sim')
             for s in list:   #TODO ARRUMAR O BARRA N
                 if s.symbol == '@':
                     s.value+=1
@@ -79,7 +77,6 @@ def readFile(f):
             if flag == 0:
                 list.append(Node(str(symbol), value=1))
     file.close()
-    print(list)
     return list
 
 def compressFile(inputPath, outputPath, list):
@@ -102,7 +99,6 @@ def compressFile(inputPath, outputPath, list):
                 binary = header[symbol]
                 binary = bytes(binary, encoding='utf-8')
                 outputFile.write(binary)
-
     inputFile.close()
     outputFile.close()
 
@@ -116,42 +112,17 @@ def uncompressFile(inputPath, outputPath):
         aux = str(inputFile.readline())
         aux = aux.split('¨')
         header[aux[1][:-1]] = aux[0]
-    for a in header:
-        print(a + ' : ' + header[a])
-    # for i in header:
-    #     print(i)
-        # aux = bytes(i.symbol[2:], encoding='utf-8')
-        # i.symbol = aux.decode('utf-8')
-        # print(aux)
     buf = str(inputFile.read())
-    # buf = ''.join(buf.split('b\''))
     string = ''
     for symbol in buf:
-        # print(string)
         string = str(string) + str(symbol)
-        # print(string)
         if string in header.keys():
-            # print(header[string])
-            # print(str(compressed.binary) == str(string))
-            # print(compressed.binary + " " + string)
             if str(header[string]) == '@':
                 outputFile.write('\n')
                 string = ''
-                print('sim')
             else:
-                # print('nao')
                 outputFile.write(header[string])
                 string = ''
-            # print(header[string])
-
-            # if string == compressed.binary[:-1]:
-            #     # print(compressed.binary)
-            #     if compressed.symbol == '000000':
-            #         outputFile.write('\n')
-            #     else:
-            #         outputFile.write(compressed.symbol)
-            #     string = ''
-            #     break
     inputFile.close()
     outputFile.close()
 
