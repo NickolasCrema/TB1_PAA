@@ -1,3 +1,4 @@
+import struct
 class Node:
     def __init__(self, symbol, value):
         self.symbol = symbol
@@ -104,34 +105,60 @@ def readFile(f, wordOrLetter):
     return list
 
 def compressFile(inputPath, outputPath, list):
-    size = len(list)
+    # size = len(list)
     inputFile = open(inputPath, encoding='utf-8', mode='r')
-    outputFile = open(outputPath, mode='wb')
+    outputFile = open(outputPath, mode='bw')
+    # outputFile.write(struct.pack('i', str(size) + '\n'))
+    # header = {}
+    # for compressedSymbol in list:
+    #     outputFile.write(struct.pack('c',compressedSymbol.symbol +  '¨' + compressedSymbol.binary[::-1] + '\n'))
+    #     header[compressedSymbol.symbol] = compressedSymbol.binary
+    # # print(header)
+    # buf = inputFile.read()
+    # bits = ''
+    # binaries = []
+    # for symbol in buf:
+    #     if symbol == '\n':
+    #         binary = header['@']
+    #         # binary = bytearray(binary, encoding='utf-8')
+    #         binaries.append(binary)
+    #     else:
+    #         if symbol in header:
+    #             binary = header[symbol]
+    #             # binary = bytearray(binary, encoding='utf-8')
+    #             binaries.append(binary)
+    # # print(bits)
+    # # outputFile.write(int(bits[::-1], 2).to_bytes(4, 'little'))
+    # for binary in binaries:
+    #     outputFile.write(int(binary[::-1], 2).to_bytes(4, 'little'))
+    # inputFile.close()
+    # outputFile.close()
+    size = len(list)
+    # size = bytearray(size)
+    print(size)
     outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
     header = {}
-    for compressedSymbol in list:
-        outputFile.write(bytes(str(compressedSymbol.symbol), encoding='utf-8') + bytes('¨', encoding='utf-8') + int(compressedSymbol.binary[::-1], 2).to_bytes(4, 'little') + bytes('\n', encoding='utf-8'))
-        header[compressedSymbol.symbol] = compressedSymbol.binary
-    # print(header)
+    for symbol in list:
+        outputFile.write(bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8'))
+        header[symbol.symbol] = symbol.binary
     buf = inputFile.read()
-    bits = ''
-    binaries = []
-    for symbol in buf:
-        if symbol == '\n':
-            binary = header['@']
-            # binary = bytearray(binary, encoding='utf-8')
-            binaries.append(binary)
+    binaryString = ''
+    for letter in buf:
+        if letter == '\n':
+            binaryString += header['@']
         else:
-            if symbol in header:
-                binary = header[symbol]
-                # binary = bytearray(binary, encoding='utf-8')
-                binaries.append(binary)
-    # print(bits)
-    # outputFile.write(int(bits[::-1], 2).to_bytes(4, 'little'))
-    for binary in binaries:
-        outputFile.write(int(binary[::-1], 2).to_bytes(4, 'little'))
+            binaryString += header[letter]
+    buffer = bytearray()
+    i = 0
+    while i < len(binaryString):
+        buffer.append(int(binaryString[i:i+8], 2))
+        i += 8
+    
+    outputFile.write(buffer)
+
     inputFile.close()
     outputFile.close()
+    
 
 def uncompressFile(inputPath, outputPath):
     inputFile = open(inputPath, mode='rb')
@@ -142,43 +169,42 @@ def uncompressFile(inputPath, outputPath):
     size = int(size)
     print(size)
     header = {}
-    aux = ''
+    # aux = ''
     for i in range(size):
-        aux = inputFile.readline()
-        letter = aux[0:1]
-        letter = str(letter)
-        letter = letter[2:3]
-        rest = aux[1:-1]
-        header[rest] = letter
-        # rest = bytearray(rest)
-        # print([i for i in rest])
-        # print(rest)
-        # print(letter)
-        # # print(aux)
-        # aux = aux.split('¨')
-        # header[aux[1]] = aux[0]
-    # print(header)
+        aux = inputFile.readline().decode('utf-8')
+        aux = aux.split('¨')
+        header[aux[1][:-1]] = aux[0]
+    print(header)
     buf = inputFile.read()
-    buf = buf.decode('ansi')
-    buf = buf.encode('utf-8')
-    # buf = buf.decode('utf-8')
-    # print(buf)
-    string = ''
+    buffer = []
+    i = 0
+    binaryString = ''
+    while(i < len(buf)):
+        buffer.append(buf)
+        i += 8
+    for b in buffer:
+        # for bit in b:
+        binaryString = binaryString + b.decode('utf-8')
+        print(b)
+        print('\n')
+        if str(binaryString) in header.keys():
+            outputFile.write(header[binaryString])
+            binaryString = ''
     
-    for symbol in buf:
-        simbolo = bytearray(symbol)
-        string = str(string) + str(simbolo)
-        print(str(string))
-        if string in header.keys():
-            print('si')
-            if header[string] == '@':
-                outputFile.write('\n')
-                string = 0
-            else:
-                outputFile.write(header[string])
-                string = ''
-    inputFile.close()
-    outputFile.close()
+    # for symbol in buf:
+    #     simbolo = bytearray(symbol)
+    #     string = str(string) + str(simbolo)
+    #     # print(str(string))
+    #     if string in header.keys():
+    #         print('si')
+    #         if header[string] == '@':
+    #             outputFile.write('\n')
+    #             string = 0
+    #         else:
+    #             outputFile.write(header[string])
+    #             string = ''
+    # inputFile.close()
+    # outputFile.close()
 
 # a = readFile("reliquias.txt", 0)
 # b = createNode(a)
