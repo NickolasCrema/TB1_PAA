@@ -103,38 +103,13 @@ def readFile(f, wordOrLetter):
 
     file.close()
     return list
+import codecs
 
 def compressFile(inputPath, outputPath, list):
-    # size = len(list)
     inputFile = open(inputPath, encoding='utf-8', mode='r')
     outputFile = open(outputPath, mode='bw')
-    # outputFile.write(struct.pack('i', str(size) + '\n'))
-    # header = {}
-    # for compressedSymbol in list:
-    #     outputFile.write(struct.pack('c',compressedSymbol.symbol +  '¨' + compressedSymbol.binary[::-1] + '\n'))
-    #     header[compressedSymbol.symbol] = compressedSymbol.binary
-    # # print(header)
-    # buf = inputFile.read()
-    # bits = ''
-    # binaries = []
-    # for symbol in buf:
-    #     if symbol == '\n':
-    #         binary = header['@']
-    #         # binary = bytearray(binary, encoding='utf-8')
-    #         binaries.append(binary)
-    #     else:
-    #         if symbol in header:
-    #             binary = header[symbol]
-    #             # binary = bytearray(binary, encoding='utf-8')
-    #             binaries.append(binary)
-    # # print(bits)
-    # # outputFile.write(int(bits[::-1], 2).to_bytes(4, 'little'))
-    # for binary in binaries:
-    #     outputFile.write(int(binary[::-1], 2).to_bytes(4, 'little'))
-    # inputFile.close()
-    # outputFile.close()
+    
     size = len(list)
-    # size = bytearray(size)
     print(size)
     outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
     header = {}
@@ -150,8 +125,9 @@ def compressFile(inputPath, outputPath, list):
             binaryString += header[letter]
     buffer = bytearray()
     i = 0
+    
     while i < len(binaryString):
-        buffer.append(int(binaryString[i:i+8], 2))
+        buffer.append(int(binaryString[i:i+8], base=2))
         i += 8
     
     outputFile.write(buffer)
@@ -164,51 +140,42 @@ def uncompressFile(inputPath, outputPath):
     inputFile = open(inputPath, mode='rb')
     outputFile = open(outputPath, encoding='utf-8', mode='w')
     size = inputFile.readline()
-    # size = int.from_bytes(size, 'little')
     size = str(size)[2:-3]
     size = int(size)
-    print(size)
+    # print(size)
     header = {}
-    # aux = ''
     for i in range(size):
         aux = inputFile.readline().decode('utf-8')
         aux = aux.split('¨')
         header[aux[1][:-1]] = aux[0]
-    print(header)
-    buf = inputFile.read()
-    buffer = []
-    i = 0
-    binaryString = ''
-    while(i < len(buf)):
-        buffer.append(buf)
-        i += 8
-    for b in buffer:
-        # for bit in b:
-        binaryString = binaryString + b.decode('utf-8')
-        print(b)
-        print('\n')
-        if str(binaryString) in header.keys():
-            outputFile.write(header[binaryString])
-            binaryString = ''
     
-    # for symbol in buf:
-    #     simbolo = bytearray(symbol)
-    #     string = str(string) + str(simbolo)
-    #     # print(str(string))
-    #     if string in header.keys():
-    #         print('si')
-    #         if header[string] == '@':
-    #             outputFile.write('\n')
-    #             string = 0
-    #         else:
-    #             outputFile.write(header[string])
-    #             string = ''
-    # inputFile.close()
-    # outputFile.close()
+    buffer = inputFile.read()    
+    binaryStr = ''
+    for byte in buffer:
+        binary = format(byte, '08b')
+        for bit in binary:
+            binaryStr = binaryStr + bit
+            if binaryStr in header.keys():
+                if header[binaryStr] == '@':
+                    outputFile.write('\n')
+                else:
+                    outputFile.write(header[binaryStr])
+                binaryStr = ''
+
+    inputFile.close()
+    outputFile.close()
+
 
 # a = readFile("reliquias.txt", 0)
 # b = createNode(a)
 # list = []
 # processNode(b, '', list)
 # compressFile("reliquias.txt", "reliquiasComprimida.bin", list)
-uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt')
+# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt')
+
+a = readFile("arquivogerado.txt", 0)
+b = createNode(a)
+list = []
+processNode(b, '', list)
+compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list)
+uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt')

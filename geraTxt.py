@@ -1,5 +1,5 @@
 with open('arquivogerado.txt', encoding='utf-8', mode='w') as arquivo:
-    for i in range(50):
+    for i in range(500):
         arquivo.write('''                             Relíquias de Casa Velha
 
 
