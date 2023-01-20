@@ -127,8 +127,14 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
     header = {}
     for symbol in list:
-        outputFile.write(bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8'))
+        buffer = bytearray()
+        string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
+        i=0
+        while i < len(string):
+            buffer.append(int(string[i:i+8], base=2)) 
+            i+=8
         header[symbol.symbol] = symbol.binary
+    outputFile.write(buffer)
     buf = inputFile.read()
     binaryString = ''
     if wordOrLetter == 0:
@@ -141,7 +147,7 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
         i = 0
         
         while i < len(binaryString):
-            buffer.append(int(binaryString[i:i+8], base=2))
+            buffer.append(int(binaryString[i:i+8], base=16))
             i += 8
     else:
         buffer = bytearray()
