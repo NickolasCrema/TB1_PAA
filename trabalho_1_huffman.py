@@ -128,57 +128,70 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     header = {}
     for symbol in list:
         buffer = bytearray()
-        string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
+        print(''.join(format(ord(i), '08b') for i in symbol.symbol))
+        string = ''.join(format(ord(i), '08b') for i in symbol.symbol) + format(ord('¨'), '08b') + ''.join(format(ord(i), '08b') for i in symbol.binary)
+        # string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
+        # print(string)
         i=0
         while i < len(string):
             buffer.append(int(string[i:i+8], base=2)) 
             i+=8
         header[symbol.symbol] = symbol.binary
-    outputFile.write(buffer)
-    buf = inputFile.read()
+        outputFile.write(buffer)
+        outputFile.write(bytes('\n', encoding='utf-8'))
+    # outputFile.write(buffer)
     binaryString = ''
-    if wordOrLetter == 0:
-        for letter in buf:
-            if letter == '\n':
-                binaryString += header['@']
-            else:
-                binaryString += header[letter]
-        buffer = bytearray()
-        i = 0
+
+    # if wordOrLetter == 0:
+    #     buf = inputFile.read()
+    #     for letter in buf:
+    #         if letter == '\n':
+    #             binaryString += header['@']
+    #         else:
+    #             binaryString += header[letter]
+    #     buffer = bytearray()
+    #     i = 0
         
-        while i < len(binaryString):
-            buffer.append(int(binaryString[i:i+8], base=16))
-            i += 8
-    else:
-        buffer = bytearray()
-        binaryString = ''
-        string = ''
-        for letter in buf:
-            print(ord(letter))
-            if ord(letter) < 65 or (ord(letter) > 122 and ord(letter) < 192):
-                binaryString += header[string]
-                if letter == '\n':
-                    binaryString += header['@']
-                else:
-                    binaryString += header[letter]
-                string = ''
-            else:
-                string += letter
+    #     while i < len(binaryString):
+    #         buffer.append(int(binaryString[i:i+8], base=2))
+    #         i += 8
+    # else:
+    #     buffer = bytearray()
+    #     buf = inputFile.readlines()
+    #     binaryString = ''
+    #     string = ''
+    #     for line in buf:
+    #         aux = line.split()
+    #         for word in aux:
+    #             if word in header.keys():
+    #                 binaryString += header[word]
+    #                 binaryString += header[' ']
+    #         binaryString += header['@']    
+    #         # print(letter)
+    #         # if ord(letter) < 65 or (ord(letter) > 122 and ord(letter) < 192):
+    #         #     binaryString += header[string]
+    #         #     if letter == '\n':
+    #         #         binaryString += header['@']
+    #         #     else:
+    #         #         binaryString += header[letter]
+    #         #     string = ''
+    #         # else:
+    #         #     string += letter
         
-        buffer = bytearray()
-        i=0
-        while i < len(binaryString):
-            buffer.append(int(binaryString[i:i+8], base=2))
-            i+=8
+        # buffer = bytearray()
+        # i=0
+        # while i < len(binaryString):
+        #     buffer.append(int(binaryString[i:i+8], base=2))
+        #     i+=8
 
 
-    outputFile.write(buffer)
+    # outputFile.write(buffer)
 
     inputFile.close()
     outputFile.close()
     
 
-def uncompressFile(inputPath, outputPath):
+def uncompressFile(inputPath, outputPath, wordOrLetter):
     inputFile = open(inputPath, mode='rb')
     outputFile = open(outputPath, encoding='utf-8', mode='w')
     size = inputFile.readline()
@@ -187,9 +200,14 @@ def uncompressFile(inputPath, outputPath):
     # print(size)
     header = {}
     for i in range(size):
-        aux = inputFile.readline().decode('utf-8')
-        aux = aux.split('¨')
-        header[aux[1][:-1]] = aux[0]
+        aux = inputFile.readline()
+        # for byte in aux:
+            # print(chr(int(format(byte, '8'))))
+            # print(format(byte, '08b'))
+            # print(ord(format(byte, '08b')))
+            # aux = aux.split('¨')
+            # header[aux[1][:-1]] = aux[0]
+    print(header)
     
     buffer = inputFile.read()    
     binaryStr = ''
@@ -208,16 +226,16 @@ def uncompressFile(inputPath, outputPath):
     outputFile.close()
 
 
-a = readFile("reliquias.txt", 1)
-b = createNode(a)
-list = []
-processNode(b, '', list)
-compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 1)
-# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt')
-
-# a = readFile("arquivogerado.txt", 0)
+# a = readFile("reliquias.txt", 1)
 # b = createNode(a)
 # list = []
 # processNode(b, '', list)
-# compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list)
+# compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 1)
+# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt', 0)
+
+a = readFile("arquivogerado.txt", 1)
+b = createNode(a)
+list = []
+processNode(b, '', list)
+compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
 # uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt')
