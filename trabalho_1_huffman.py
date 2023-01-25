@@ -88,36 +88,42 @@ def readFile(f, wordOrLetter):
         header['@'] = 0
         header[' '] = 0
         for line in buf:
-            
-            aux = line.split(' ')
-            # print(line)
-            # print(aux)
-            header[' '] += len(aux)-1
+            aux = ''.join(line.split('\n')).split(' ')
             header['@'] += 1
-            # print(aux)
             for word in aux:
-                if word != '' and word != '\n' and word != ' ':
-                    # print(word)
-                    # print(ord(word[-1:]))
-                    # print(header)
-                    if  (ord(word[-1:]) != 10 or ord(word[-1:]) != 8) and word != ' ':
-                        if ord(word[-1:]) < 65 or ord(word[-1:]) > 122:
-                            if word[-1:] in header.keys():
-                                header[word[-1:]] += 1
-                            else:
-                                header[word[-1:]] = 0
-                            word = word[:-1]
-                        if word in header.keys():
-                            header[word] += 1
-                        else:
-                            header[word] = 1
+                if word in header.keys():
+                    header[word] += 1
+                    header[' '] += 1
+                else:
+                    header[word] = 1
+                    header[' '] += 1
+            header['@'] += 1
+                # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
+                #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
+                #         if word[-1:] in header.keys():
+                #             header[word[-1:]] += 1
+                #         else:
+                #             header[word[-1:]] = 1
+                #         word = word[:-1]
+                #     if word in header.keys():
+                #         header[word] += 1
+                #     else:
+                #         header[word] = 1     TODO SE TIVER SACO EU USO ISSO
+                # elif word == ' ':
+                #     header[' '] += 1
+                # elif word == '\n':
+                #     header['@'] += 1
+                # else:
+                #     if word in header.keys():
+                #         header[word] += 1
+                #     else:
+                #         header[word] = 1
 
         for word in header.keys():
             list.append(Node(symbol=word, value=header[word]))
 
     file.close()
     return list
-import codecs
 
 def compressFile(inputPath, outputPath, list, wordOrLetter):
     inputFile = open(inputPath, encoding='utf-8', mode='r')
@@ -128,7 +134,7 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     header = {}
     for symbol in list:
         buffer = bytearray()
-        print(''.join(format(ord(i), '08b') for i in symbol.symbol))
+        # print(''.join(format(ord(i), '08b') for i in symbol.symbol))
         string = ''.join(format(ord(i), '08b') for i in symbol.symbol) + format(ord('¨'), '08b') + ''.join(format(ord(i), '08b') for i in symbol.binary)
         # string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
         # print(string)
@@ -142,50 +148,56 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     # outputFile.write(buffer)
     binaryString = ''
 
-    # if wordOrLetter == 0:
-    #     buf = inputFile.read()
-    #     for letter in buf:
-    #         if letter == '\n':
-    #             binaryString += header['@']
-    #         else:
-    #             binaryString += header[letter]
-    #     buffer = bytearray()
-    #     i = 0
+    if wordOrLetter == 0:
+        buf = inputFile.read()
+        for letter in buf:
+            if letter == '\n':
+                binaryString += header['@']
+            else:
+                binaryString += header[letter]
+        buffer = bytearray()
+        i = 0
         
-    #     while i < len(binaryString):
-    #         buffer.append(int(binaryString[i:i+8], base=2))
-    #         i += 8
-    # else:
-    #     buffer = bytearray()
-    #     buf = inputFile.readlines()
-    #     binaryString = ''
-    #     string = ''
-    #     for line in buf:
-    #         aux = line.split()
-    #         for word in aux:
-    #             if word in header.keys():
-    #                 binaryString += header[word]
-    #                 binaryString += header[' ']
-    #         binaryString += header['@']    
-    #         # print(letter)
-    #         # if ord(letter) < 65 or (ord(letter) > 122 and ord(letter) < 192):
-    #         #     binaryString += header[string]
-    #         #     if letter == '\n':
-    #         #         binaryString += header['@']
-    #         #     else:
-    #         #         binaryString += header[letter]
-    #         #     string = ''
-    #         # else:
-    #         #     string += letter
+        while i < len(binaryString):
+            buffer.append(int(binaryString[i:i+8], base=2))
+            i += 8
+    else:
+        buffer = bytearray()
+        buf = inputFile.readlines()
+        binaryString = ''
+        string = ''
+        for line in buf:
+            aux = ''.join(line.split('\n')).split(' ')
+            for word in aux:
+                if word in header.keys():
+                    binaryString += header[word]
+                    binaryString += header[' ']
+                # if word == '\n':
+                #     binaryString += header['@']
+                # elif word == ' ':
+                #     binaryString += header[' ']
+                # elif word != ' ' and word != '\n' and word != '' and len(word) > 1:
+                #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
+                #         binaryString += header[word[-1:]]
+                #         word = word[:-1]
+                #     if word in header.keys():
+                #         binaryString += header[word]
+                #         binaryString += header[' ']   TODO SE TIVER SACO EU USO ISSO
+                # else:
+                #     if word in header.keys():
+                #         binaryString += header[word]
+                #         binaryString += header[' ']
+            
+            binaryString += header['@']
         
-        # buffer = bytearray()
-        # i=0
-        # while i < len(binaryString):
-        #     buffer.append(int(binaryString[i:i+8], base=2))
-        #     i+=8
+        buffer = bytearray()
+        i=0
+        while i < len(binaryString):
+            buffer.append(int(binaryString[i:i+8], base=2))
+            i+=8
 
 
-    # outputFile.write(buffer)
+    outputFile.write(buffer)
 
     inputFile.close()
     outputFile.close()
@@ -199,14 +211,17 @@ def uncompressFile(inputPath, outputPath, wordOrLetter):
     size = int(size)
     # print(size)
     header = {}
+    string = ''
     for i in range(size):
         aux = inputFile.readline()
-        # for byte in aux:
-            # print(chr(int(format(byte, '8'))))
-            # print(format(byte, '08b'))
-            # print(ord(format(byte, '08b')))
-            # aux = aux.split('¨')
-            # header[aux[1][:-1]] = aux[0]
+        for byte in aux:
+            if chr(byte) != '\n':
+                string += chr(byte)
+        splitstring = ''.join(string.split('\n')).split('¨')
+        print('str: ' + string)
+        string = ''
+        header[splitstring[1]] = splitstring[0]
+            
     print(header)
     
     buffer = inputFile.read()    
@@ -238,4 +253,4 @@ b = createNode(a)
 list = []
 processNode(b, '', list)
 compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
-# uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt')
+uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt', 1)
