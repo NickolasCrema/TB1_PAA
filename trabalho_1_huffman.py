@@ -1,4 +1,45 @@
-import struct
+def main(args):
+    import os
+    path = os.getcwd()
+    clear = lambda: os.system('cls')
+    options = -1
+    fileName = ''
+    outputFileName = ''
+    clear()
+    while(True):
+        if options == -1:
+            clear()
+            print('\n1 - Compressao por letra')
+            print('2 - Compressao por palavra')
+            print('3 - Descompressao por letra')
+            print('4 - Descompressao por palavra')
+            options = input()
+        elif options == '1':
+            clear()
+            print('\nInsira o nome do arquivo <-------------------------------------------> 0 - Para voltar')
+            # print('0 - Voltar')
+            fileName = input()
+            if fileName == '0':
+                options = -1
+            else:
+                buf = readFile(fileName, 0)
+                print('\nInsira o nome do arquivo compactado <--------------------------------> 0 - Para voltar')
+                outputFileName = input()
+                if outputFileName == '0':
+                    options = -1
+                else:
+                    huffman = createNode(buf)
+                    list = []
+                    processNode(huffman, '', list)
+                    if compressFile(fileName, outputFileName, list, 0) == 0:
+                        print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                    else:
+                        print('Erro ao compactar arquivo! Aperte qualquer tecla para continuar')
+                    input()
+                    options = -1
+
+    return 0
+#Estrutura de nó da árvore
 class Node:
     def __init__(self, symbol, value):
         self.symbol = symbol
@@ -83,20 +124,25 @@ def readFile(f, wordOrLetter):
     else:
         list = []
         buf = file.readlines()
-        # print(buf)
         header = {}
         header['@'] = 0
         header[' '] = 0
         for line in buf:
             aux = ''.join(line.split('\n')).split(' ')
             header['@'] += 1
-            for word in aux:
-                if word in header.keys():
-                    header[word] += 1
-                    header[' '] += 1
+            for i, word in enumerate(aux):
+                if i == len(aux)-1:
+                    if word in header.keys():
+                        header[word] += 1
+                    else:
+                        header[word] = 1
                 else:
-                    header[word] = 1
-                    header[' '] += 1
+                    if word in header.keys():
+                        header[word] += 1
+                        header[' '] += 1
+                    else:
+                        header[word] = 1
+                        header[' '] += 1
             header['@'] += 1
                 # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
                 #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
@@ -132,25 +178,16 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     print(size)
     outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
     header = {}
+    toWrite = ''
     for symbol in list:
         buffer = bytearray()
-        # print(''.join(format(ord(i), '08b') for i in symbol.symbol))
-        # string = ''.join(format(ord(i), '08b') for i in symbol.symbol) + format(ord('¨'), '08b') + ''.join(format(ord(i), '08b') for i in symbol.binary)
-        string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
-        print(bytes(symbol.symbol, encoding='utf-8') + bytes("¨", encoding='utf-8') + bytes(symbol.binary, encoding='utf-8'))
-
-        # string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
-        #TODO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-        # print(string)
-        i=0
-        # while i < len(string):
-        #     buffer.append(int(string[i:i+8], base=2)) 
-        #     i+=8
+        string = symbol.symbol + '¨' + symbol.binary + '\n'
+        toWrite = [i.encode('ansi') for i in string]
+        string = toWrite[0]
+        for i in range(1, len(toWrite)):
+            string += toWrite[i]
         header[symbol.symbol] = symbol.binary
         outputFile.write(string)
-        # outputFile.write(bytes('\n', encoding='utf-8'))
-        # buffer += (string)
-    # outputFile.write(buffer)
     binaryString = ''
 
     if wordOrLetter == 0:
@@ -173,10 +210,14 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
         string = ''
         for line in buf:
             aux = ''.join(line.split('\n')).split(' ')
-            for word in aux:
-                if word in header.keys():
-                    binaryString += header[word]
-                    binaryString += header[' ']
+            for i, word in enumerate(aux):
+                if i == len(aux)-1:
+                    if word in header.keys():
+                        binaryString += header[word]
+                else:
+                    if word in header.keys():
+                        binaryString += header[word]
+                        binaryString += header[' ']
                 # if word == '\n':
                 #     binaryString += header['@']
                 # elif word == ' ':
@@ -206,6 +247,7 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
 
     inputFile.close()
     outputFile.close()
+    return 0
     
 
 def uncompressFile(inputPath, outputPath, wordOrLetter):
@@ -218,19 +260,19 @@ def uncompressFile(inputPath, outputPath, wordOrLetter):
     header = {}
     string = ''
     for i in range(size):
-        aux = inputFile.readline()
-        for byte in aux:
-            print(chr(byte))
-        #     if chr(byte) != '\n':
-        #         string += chr(byte)
-        # splitstring = ''.join(string.split('\n')).split('¨')
-        # print('str: ' + string)
-        # string = ''
-        # header[splitstring[1]] = splitstring[0]
+        aux = inputFile.readline().decode('ansi')
+        # print(aux)
+        # for byte in aux:
+            
+        #     string += byte
+        splitstring = ''.join(aux.split('\n')).split('¨')
+        print('str: ' + aux)
+        string = ''
+        header[splitstring[1]] = splitstring[0]
             
     print(header)
     
-    buffer = inputFile.read()    
+    buffer = inputFile.read()
     binaryStr = ''
     for byte in buffer:
         binary = format(byte, '08b')
@@ -247,11 +289,11 @@ def uncompressFile(inputPath, outputPath, wordOrLetter):
     outputFile.close()
 
 
-a = readFile("reliquias.txt", 0)
-b = createNode(a)
-list = []
-processNode(b, '', list)
-compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 0)
+# a = readFile("reliquias.txt", 0)
+# b = createNode(a)
+# list = []
+# processNode(b, '', list)
+# compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 0)
 # uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt', 0)
 
 # a = readFile("arquivogerado.txt", 1)
@@ -260,3 +302,8 @@ compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 0)
 # processNode(b, '', list)
 # compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
 # uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt', 1)
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv))
+
