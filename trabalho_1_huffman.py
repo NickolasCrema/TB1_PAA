@@ -135,16 +135,21 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
     for symbol in list:
         buffer = bytearray()
         # print(''.join(format(ord(i), '08b') for i in symbol.symbol))
-        string = ''.join(format(ord(i), '08b') for i in symbol.symbol) + format(ord('¨'), '08b') + ''.join(format(ord(i), '08b') for i in symbol.binary)
+        # string = ''.join(format(ord(i), '08b') for i in symbol.symbol) + format(ord('¨'), '08b') + ''.join(format(ord(i), '08b') for i in symbol.binary)
+        string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
+        print(bytes(symbol.symbol, encoding='utf-8') + bytes("¨", encoding='utf-8') + bytes(symbol.binary, encoding='utf-8'))
+
         # string = bytes(symbol.symbol + '¨' + symbol.binary + '\n', encoding='utf-8')
+        #TODO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
         # print(string)
         i=0
-        while i < len(string):
-            buffer.append(int(string[i:i+8], base=2)) 
-            i+=8
+        # while i < len(string):
+        #     buffer.append(int(string[i:i+8], base=2)) 
+        #     i+=8
         header[symbol.symbol] = symbol.binary
-        outputFile.write(buffer)
-        outputFile.write(bytes('\n', encoding='utf-8'))
+        outputFile.write(string)
+        # outputFile.write(bytes('\n', encoding='utf-8'))
+        # buffer += (string)
     # outputFile.write(buffer)
     binaryString = ''
 
@@ -215,12 +220,13 @@ def uncompressFile(inputPath, outputPath, wordOrLetter):
     for i in range(size):
         aux = inputFile.readline()
         for byte in aux:
-            if chr(byte) != '\n':
-                string += chr(byte)
-        splitstring = ''.join(string.split('\n')).split('¨')
-        print('str: ' + string)
-        string = ''
-        header[splitstring[1]] = splitstring[0]
+            print(chr(byte))
+        #     if chr(byte) != '\n':
+        #         string += chr(byte)
+        # splitstring = ''.join(string.split('\n')).split('¨')
+        # print('str: ' + string)
+        # string = ''
+        # header[splitstring[1]] = splitstring[0]
             
     print(header)
     
@@ -241,16 +247,16 @@ def uncompressFile(inputPath, outputPath, wordOrLetter):
     outputFile.close()
 
 
-# a = readFile("reliquias.txt", 1)
-# b = createNode(a)
-# list = []
-# processNode(b, '', list)
-# compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 1)
-# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt', 0)
-
-a = readFile("arquivogerado.txt", 1)
+a = readFile("reliquias.txt", 0)
 b = createNode(a)
 list = []
 processNode(b, '', list)
-compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
-uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt', 1)
+compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 0)
+# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt', 0)
+
+# a = readFile("arquivogerado.txt", 1)
+# b = createNode(a)
+# list = []
+# processNode(b, '', list)
+# compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
+# uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt', 1)
