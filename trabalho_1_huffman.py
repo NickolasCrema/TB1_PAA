@@ -1,5 +1,6 @@
 def main(args):
     import os
+    import time
     path = os.getcwd()
     clear = lambda: os.system('cls')
     options = -1
@@ -11,34 +12,115 @@ def main(args):
             clear()
             print('\n1 - Compressao por letra')
             print('2 - Compressao por palavra')
-            print('3 - Descompressao por letra')
-            print('4 - Descompressao por palavra')
+            print('3 - Descompressao')
+            print('0 - Sair')
             options = input()
         elif options == '1':
             clear()
-            print('\nInsira o nome do arquivo <-------------------------------------------> 0 - Para voltar')
-            # print('0 - Voltar')
+            print('\nInsira o nome do arquivo original <-------------------------------------------> 0 - Para voltar')            # print('0 - Voltar')
             fileName = input()
             if fileName == '0':
                 options = -1
             else:
-                buf = readFile(fileName, 0)
-                print('\nInsira o nome do arquivo compactado <--------------------------------> 0 - Para voltar')
+                buf, flag = readFile(fileName, 0)
+                if flag == 1:
+                    print('Erro ao abrir arquivo! Aperte qualquer tecla para continuar')
+                    input()
+                    options = -1
+                elif flag == -1:
+                    print('Erro durante a leitura do arquivo! Aperte qualquer tecla para continuar')
+                    input()
+                    options = -1
+                else:
+                    print('\nInsira o nome do novo arquivo compactado <------------------------------------> 0 - Para voltar')
+                    outputFileName = input()
+                    if outputFileName == '0':
+                        options = -1
+                    else:
+                        huffman = createNode(buf)
+                        list = []
+                        processNode(huffman, '', list)
+                        result = compressFile(fileName, outputFileName, list, 0)
+                        if result == 0:
+                            print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                        elif result == 1:
+                            print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                        elif result == 2:
+                            print('Erro ao abrir arquivo de saída! Aperte qualquer tecla para continuar')
+                        elif result == -1:
+                            print('Erro ao tentar compactar arquivo! Aperte qualquer tecla para continuar')
+                        else:
+                            print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
+                        input()
+                        options = -1
+
+        elif options == '2':
+            clear()
+            print('\nInsira o nome do arquivo original <-------------------------------------------> 0 - Para voltar')
+            fileName = input()
+            if fileName == '0':
+                options = -1
+            else:
+                buf, flag = readFile(fileName, 1)
+                if flag == 1:
+                    print('Erro ao abrir arquivo!')
+                elif flag == -1:
+                    print('Erro durante a leitura do arquivo!')
+                else:
+                    print('\nInsira o nome do novo arquivo compactado <------------------------------------> 0 - Para voltar')
+                    outputFileName = input()
+                    if outputFileName == '0':
+                        options = -1
+                    else:
+                        huffman = createNode(buf)
+                        list = []
+                        processNode(huffman, '', list)
+                        result = compressFile(fileName, outputFileName, list, 1)
+                        if result == 0:
+                            print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                        elif result == 1:
+                            print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                        elif result == 2:
+                            print('Erro ao abrir arquivo de saída! Aperte qualquer tecla para continuar')
+                        elif result == -1:
+                            print('Erro ao tentar compactar arquivo! Aperte qualquer tecla para continuar')
+                        else:
+                            print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
+                        input()
+                        options = -1
+
+        elif options == '3':
+            clear()
+            print('\nInsira o nome do arquivo compactado <-----------------------------------------> 0 - Para voltar')
+            fileName = input()
+            if fileName == '0':
+                options = -1
+            else:
+                print('\nInsira o nome do novo arquivo descompactado <---------------------------------> 0 - Para voltar')
                 outputFileName = input()
                 if outputFileName == '0':
                     options = -1
                 else:
-                    huffman = createNode(buf)
-                    list = []
-                    processNode(huffman, '', list)
-                    if compressFile(fileName, outputFileName, list, 0) == 0:
-                        print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                    result = uncompressFile(fileName, outputFileName)
+                    if result == 0:
+                        print('Arquivo descompactado com sucesso! Aperte qualquer tecla para continuar')
+                    elif result == 1:
+                        print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                    elif result == 2:
+                        print('Erro ao ler arquivo de saída! Aperte qualquer tecla para continuar')
+                    elif result == -1:
+                        print('Erro ao descompactar arquivo! Aperte qualquer tecla para continuar')
                     else:
-                        print('Erro ao compactar arquivo! Aperte qualquer tecla para continuar')
+                        print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
                     input()
                     options = -1
 
-    return 0
+        elif options == '0':
+            clear()
+            print('\n  Encerrando o programa!')
+            time.sleep(1.5)
+            return 0    
+                    
 #Estrutura de nó da árvore
 class Node:
     def __init__(self, symbol, value):
@@ -96,198 +178,241 @@ def processNode(node, binary, list):
     processNode(node.left, binary + "0", list)
     processNode(node.right, binary + "1", list)
 
+# @ Realiza a leitura do arquivo fonte e conta a frequencia de cada simbolo, 
+# @ sendo a contagem por letra ou por palavra
+# @     Params: f: Caminho do arquivo fonte, wordOrLetter: Flag que seta como será feita a contagem de 
+# @     frequencias, por letra ou por caracter
+# @     Return: Retorna uma tupla;
+#           - Uma lista contendo 
+#
+#
 def readFile(f, wordOrLetter):
-    file = open(f, encoding='utf-8', mode='r')
-    if wordOrLetter == 0:
-        buf = file.read()
-        list = []
-        flag = 0
-        string = ''
-        list.append(Node(str('@'), 0))
-        for symbol in buf:
-            # print(symbol)
-            if symbol == '\n':
-                for s in list:   #TODO ARRUMAR O BARRA N
-                    if s.symbol == '@':
-                        s.value+=1
+    try:
+        file = open(f, encoding='utf-8', mode='r')
+
+    except:
+        return [], 1
+
+    try:
+        if wordOrLetter == 0:
+            buf = file.read()
+            list = []
+            flag = 0
+            list.append(Node(str('@'), 0))
+            for symbol in buf:
+                # print(symbol)
+                if symbol == '\n':
+                    for s in list:   #TODO ARRUMAR O BARRA N
+                        if s.symbol == '@':
+                            s.value+=1
+                            break
                         break
-                    break
-                pass
-            else:
-                flag = 0
-                for s in list:
-                    if str(s.symbol) == str(symbol):
-                        flag = 1
-                        s.value+=1
-                if flag == 0:
-                    list.append(Node(str(symbol), value=1))
-    else:
-        list = []
-        buf = file.readlines()
-        header = {}
-        header['@'] = 0
-        header[' '] = 0
-        for line in buf:
-            aux = ''.join(line.split('\n')).split(' ')
-            header['@'] += 1
-            for i, word in enumerate(aux):
-                if i == len(aux)-1:
-                    if word in header.keys():
-                        header[word] += 1
-                    else:
-                        header[word] = 1
+                    pass
                 else:
-                    if word in header.keys():
-                        header[word] += 1
-                        header[' '] += 1
+                    flag = 0
+                    for s in list:
+                        if str(s.symbol) == str(symbol):
+                            flag = 1
+                            s.value+=1
+                    if flag == 0:
+                        list.append(Node(str(symbol), value=1))
+        else:
+            list = []
+            buf = file.readlines()
+            header = {}
+            header['@'] = 0
+            header[' '] = 0
+            for line in buf:
+                aux = ''.join(line.split('\n')).split(' ')
+                header['@'] += 1
+                for i, word in enumerate(aux):
+                    if i == len(aux)-1:
+                        if word in header.keys():
+                            header[word] += 1
+                        else:
+                            header[word] = 1
                     else:
-                        header[word] = 1
-                        header[' '] += 1
-            header['@'] += 1
-                # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
-                #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
-                #         if word[-1:] in header.keys():
-                #             header[word[-1:]] += 1
-                #         else:
-                #             header[word[-1:]] = 1
-                #         word = word[:-1]
-                #     if word in header.keys():
-                #         header[word] += 1
-                #     else:
-                #         header[word] = 1     TODO SE TIVER SACO EU USO ISSO
-                # elif word == ' ':
-                #     header[' '] += 1
-                # elif word == '\n':
-                #     header['@'] += 1
-                # else:
-                #     if word in header.keys():
-                #         header[word] += 1
-                #     else:
-                #         header[word] = 1
+                        if word in header.keys():
+                            header[word] += 1
+                            header[' '] += 1
+                        else:
+                            header[word] = 1
+                            header[' '] += 1
+                header['@'] += 1
+                    # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
+                    #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
+                    #         if word[-1:] in header.keys():
+                    #             header[word[-1:]] += 1
+                    #         else:
+                    #             header[word[-1:]] = 1
+                    #         word = word[:-1]
+                    #     if word in header.keys():
+                    #         header[word] += 1
+                    #     else:
+                    #         header[word] = 1     TODO SE TIVER SACO EU USO ISSO
+                    # elif word == ' ':
+                    #     header[' '] += 1
+                    # elif word == '\n':
+                    #     header['@'] += 1
+                    # else:
+                    #     if word in header.keys():
+                    #         header[word] += 1
+                    #     else:
+                    #         header[word] = 1
 
-        for word in header.keys():
-            list.append(Node(symbol=word, value=header[word]))
+            for word in header.keys():
+                list.append(Node(symbol=word, value=header[word]))
+        file.close()
 
-    file.close()
-    return list
+    except:
+        file.close()
+        return [], -1
+
+    return list, 0
 
 def compressFile(inputPath, outputPath, list, wordOrLetter):
-    inputFile = open(inputPath, encoding='utf-8', mode='r')
-    outputFile = open(outputPath, mode='bw')
-    size = len(list)
-    print(size)
-    outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
-    header = {}
-    toWrite = ''
-    for symbol in list:
-        buffer = bytearray()
-        string = symbol.symbol + '¨' + symbol.binary + '\n'
-        toWrite = [i.encode('ansi') for i in string]
-        string = toWrite[0]
-        for i in range(1, len(toWrite)):
-            string += toWrite[i]
-        header[symbol.symbol] = symbol.binary
-        outputFile.write(string)
-    binaryString = ''
-
-    if wordOrLetter == 0:
-        buf = inputFile.read()
-        for letter in buf:
-            if letter == '\n':
-                binaryString += header['@']
-            else:
-                binaryString += header[letter]
-        buffer = bytearray()
-        i = 0
-        
-        while i < len(binaryString):
-            buffer.append(int(binaryString[i:i+8], base=2))
-            i += 8
-    else:
-        buffer = bytearray()
-        buf = inputFile.readlines()
+    try:
+        inputFile = open(inputPath, encoding='utf-8', mode='r')
+    except:
+        return 1
+    try:
+        outputFile = open(outputPath, mode='bw')
+    except: 
+        return 2
+    try:
+        size = len(list)
+        print(size)
+        outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
+        header = {}
+        toWrite = ''
+        for symbol in list:
+            buffer = bytearray()
+            string = symbol.symbol + '¨' + symbol.binary + '\n'
+            toWrite = [i.encode('ansi') for i in string]
+            string = toWrite[0]
+            for i in range(1, len(toWrite)):
+                string += toWrite[i]
+            header[symbol.symbol] = symbol.binary
+            outputFile.write(string)
         binaryString = ''
-        string = ''
-        for line in buf:
-            aux = ''.join(line.split('\n')).split(' ')
-            for i, word in enumerate(aux):
-                if i == len(aux)-1:
-                    if word in header.keys():
-                        binaryString += header[word]
+
+        if wordOrLetter == 0:
+            buf = inputFile.read()
+            for letter in buf:
+                if letter == '\n':
+                    binaryString += header['@']
                 else:
-                    if word in header.keys():
-                        binaryString += header[word]
-                        binaryString += header[' ']
-                # if word == '\n':
-                #     binaryString += header['@']
-                # elif word == ' ':
-                #     binaryString += header[' ']
-                # elif word != ' ' and word != '\n' and word != '' and len(word) > 1:
-                #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
-                #         binaryString += header[word[-1:]]
-                #         word = word[:-1]
-                #     if word in header.keys():
-                #         binaryString += header[word]
-                #         binaryString += header[' ']   TODO SE TIVER SACO EU USO ISSO
-                # else:
-                #     if word in header.keys():
-                #         binaryString += header[word]
-                #         binaryString += header[' ']
+                    binaryString += header[letter]
+            buffer = bytearray()
+            i = 0
             
-            binaryString += header['@']
+            while i < len(binaryString):
+                buffer.append(int(binaryString[i:i+8], base=2))
+                i += 8
+        else:
+            buffer = bytearray()
+            buf = inputFile.readlines()
+            binaryString = ''
+            string = ''
+            for line in buf:
+                aux = ''.join(line.split('\n')).split(' ')
+                for i, word in enumerate(aux):
+                    if i == len(aux)-1:
+                        if word in header.keys():
+                            binaryString += header[word]
+                    else:
+                        if word in header.keys():
+                            binaryString += header[word]
+                            binaryString += header[' ']
+                    # if word == '\n':
+                    #     binaryString += header['@']
+                    # elif word == ' ':
+                    #     binaryString += header[' ']
+                    # elif word != ' ' and word != '\n' and word != '' and len(word) > 1:
+                    #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
+                    #         binaryString += header[word[-1:]]
+                    #         word = word[:-1]
+                    #     if word in header.keys():
+                    #         binaryString += header[word]
+                    #         binaryString += header[' ']   TODO SE TIVER SACO EU USO ISSO
+                    # else:
+                    #     if word in header.keys():
+                    #         binaryString += header[word]
+                    #         binaryString += header[' ']
+                
+                binaryString += header['@']
+            
+            buffer = bytearray()
+            i=0
+            while i < len(binaryString):
+                buffer.append(int(binaryString[i:i+8], base=2))
+                i+=8
+        outputFile.write(buffer)
+
+        inputFile.close()
+        outputFile.close()
+
+    except:
+        inputFile.close()
+        outputFile.close()
+        return -1
+
+    return 0
+    
+
+def uncompressFile(inputPath, outputPath):
+    try:
+        inputFile = open(inputPath, mode='rb')
+
+    except:
+        return 1
+
+    try:
+        outputFile = open(outputPath, encoding='utf-8', mode='w')
+
+    except:
+        return 2
+
+    try:
+        size = inputFile.readline()
+        size = str(size)[2:-3]
+        size = int(size)
+        # print(size)
+        header = {}
+        string = ''
+        for i in range(size):
+            aux = inputFile.readline().decode('ansi')
+            # print(aux)
+            # for byte in aux:
+                
+            #     string += byte
+            splitstring = ''.join(aux.split('\n')).split('¨')
+            print('str: ' + aux)
+            string = ''
+            header[splitstring[1]] = splitstring[0]
+                
+        print(header)
         
-        buffer = bytearray()
-        i=0
-        while i < len(binaryString):
-            buffer.append(int(binaryString[i:i+8], base=2))
-            i+=8
-
-
-    outputFile.write(buffer)
+        buffer = inputFile.read()
+        binaryStr = ''
+        for byte in buffer:
+            binary = format(byte, '08b')
+            for bit in binary:
+                binaryStr = binaryStr + bit
+                if binaryStr in header.keys():
+                    if header[binaryStr] == '@':
+                        outputFile.write('\n')
+                    else:
+                        outputFile.write(header[binaryStr])
+                    binaryStr = ''
+    except:
+        inputFile.close()
+        outputFile.close()
+        return -1
 
     inputFile.close()
     outputFile.close()
     return 0
-    
-
-def uncompressFile(inputPath, outputPath, wordOrLetter):
-    inputFile = open(inputPath, mode='rb')
-    outputFile = open(outputPath, encoding='utf-8', mode='w')
-    size = inputFile.readline()
-    size = str(size)[2:-3]
-    size = int(size)
-    # print(size)
-    header = {}
-    string = ''
-    for i in range(size):
-        aux = inputFile.readline().decode('ansi')
-        # print(aux)
-        # for byte in aux:
-            
-        #     string += byte
-        splitstring = ''.join(aux.split('\n')).split('¨')
-        print('str: ' + aux)
-        string = ''
-        header[splitstring[1]] = splitstring[0]
-            
-    print(header)
-    
-    buffer = inputFile.read()
-    binaryStr = ''
-    for byte in buffer:
-        binary = format(byte, '08b')
-        for bit in binary:
-            binaryStr = binaryStr + bit
-            if binaryStr in header.keys():
-                if header[binaryStr] == '@':
-                    outputFile.write('\n')
-                else:
-                    outputFile.write(header[binaryStr])
-                binaryStr = ''
-
-    inputFile.close()
-    outputFile.close()
-
 
 # a = readFile("reliquias.txt", 0)
 # b = createNode(a)
