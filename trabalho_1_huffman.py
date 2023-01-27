@@ -1,7 +1,7 @@
-def main(args):
+#Main do programa, funciona como um menu
+def main():
     import os
     import time
-    path = os.getcwd()
     clear = lambda: os.system('cls')
     options = -1
     fileName = ''
@@ -121,7 +121,7 @@ def main(args):
             time.sleep(1.5)
             return 0    
                     
-#Estrutura de nó da árvore
+#Estrutura para representar um nó da árvore
 class Node:
     def __init__(self, symbol, value):
         self.symbol = symbol
@@ -144,6 +144,7 @@ class Node:
     def setRight(self, right):
         self.right = right
 
+#Estrutura para representar os símbolos comprimidos
 class compressedSymbol:
     def __init__(self, symbol, binary):
         self.symbol = symbol
@@ -152,6 +153,14 @@ class compressedSymbol:
     def __repr__(self):
         return f"symbol: {self.symbol}; binary: {self.binary} "
 
+#Gera o nó pai com base em seus filhos
+#Params:
+#   Nó da esquerda
+#   Nó da direita
+#Return:
+#   Retorna o nó pai completo
+#Pré-Condição: Nenhuma
+#Pós-Condição: Gera o nó pai
 def fillNode(left, right):
     node = Node(None, 0)
     node.setLeft(left)
@@ -159,6 +168,13 @@ def fillNode(left, right):
     node.setValue(left.value + right.value)
     return node
 
+#Monta a árvore de acordo com o algoritmo de Huffman
+#Params:
+#   queue: Uma lista para servir como fila de prioridade
+#Return:
+#   Retorna a raiz da árvore
+#Pré-Condição: Necessita da lista montada corretamente
+#Pós-Condição: Monta a árvore
 def createNode(queue):
     n = len(queue)
     node = 0
@@ -170,6 +186,15 @@ def createNode(queue):
         queue.append(node)
     return node
 
+#Percorre a árvore codificando os símbolos
+#Params:
+#   Árvore binária
+#   Uma string vazia para armazenar a string binária ao longo da recursão
+#   Uma lista vazia para armazenar os símbolos codificados ao longo da recursão
+#Return:
+#   Não retorna nada
+#Pré-Condição: Geração correta da árvore
+#Pós-Condição: Preenche a lista com os símbolos comprimidos
 def processNode(node, binary, list):
     if node == None:
         return
@@ -178,14 +203,21 @@ def processNode(node, binary, list):
     processNode(node.left, binary + "0", list)
     processNode(node.right, binary + "1", list)
 
-# @ Realiza a leitura do arquivo fonte e conta a frequencia de cada simbolo, 
-# @ sendo a contagem por letra ou por palavra
-# @     Params: f: Caminho do arquivo fonte, wordOrLetter: Flag que seta como será feita a contagem de 
-# @     frequencias, por letra ou por caracter
-# @     Return: Retorna uma tupla;
-#           - Uma lista contendo 
-#
-#
+#Realiza a leitura do arquivo fonte e conta a frequencia de cada simbolo, 
+#sendo a contagem por letra ou por palavra
+#Params: 
+#   f: Caminho do arquivo fonte 
+#   wordOrLetter: Flag que seta como será feita a contagem de frequencias:
+#       0 - Por letra
+#       1 - Por palavra
+#Return: Retorna uma tupla;
+#   Uma lista contendo os nós da árvore, em caso de erro retorna uma lista vazia
+#   Uma flag que sinaliza se houve erro ou não:
+#       0 - Sucesso
+#       1 - Falha na abertura do arquivo
+#      -1 - Falha na compressão do arquivo 
+#Pré-Condição: Arquivo fonte precisa existir
+#Pós-Condição: Faz a leitura do arquivo e armazena os nós em uma lista
 def readFile(f, wordOrLetter):
     try:
         file = open(f, encoding='utf-8', mode='r')
@@ -262,14 +294,31 @@ def readFile(f, wordOrLetter):
 
             for word in header.keys():
                 list.append(Node(symbol=word, value=header[word]))
-        file.close()
 
     except:
         file.close()
         return [], -1
 
+    file.close()
+    
     return list, 0
 
+#Realiza a compressão do arquivo
+#Params:
+#   inputPath: Caminho do arquivo fonte
+#   outputPath: Caminho destinado ao arquivo de saída
+#   list: Lista com os símbolos codificados para geração do cabeçalho
+#   wordOrLetter: Flag que inidica o tipo de compressão;
+#       0 - Por letra;
+#       1 - Por palavra;
+#Return: 
+#   Retorna um inteiro que sinaliza se houve erro ou não;
+#       0 - Sucesso
+#       1 - Erro na abertura do arquivo fonte
+#       2 - Erro na abertura do arquivo de saída
+#      -1 - Erro na codificação do arquivo
+#Pré-Condição: Sucesso na codificação da árvore
+#Pós-Condição: Comprime o arquivo
 def compressFile(inputPath, outputPath, list, wordOrLetter):
     try:
         inputFile = open(inputPath, encoding='utf-8', mode='r')
@@ -281,7 +330,6 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
         return 2
     try:
         size = len(list)
-        print(size)
         outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
         header = {}
         toWrite = ''
@@ -310,7 +358,6 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
                 buffer.append(int(binaryString[i:i+8], base=2))
                 i += 8
         else:
-            buffer = bytearray()
             buf = inputFile.readlines()
             binaryString = ''
             string = ''
@@ -349,17 +396,29 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
                 i+=8
         outputFile.write(buffer)
 
-        inputFile.close()
-        outputFile.close()
 
     except:
         inputFile.close()
         outputFile.close()
         return -1
 
+    inputFile.close()
+    outputFile.close()
+
     return 0
     
-
+#Realiza a descompressão do arquivo
+#Params:
+#   inputPath: Caminho do arquivo a ser descomprimido
+#   outputPath: Caminho destinado ao arquivo de saída
+#Return:
+#   Retorna um inteiro para sinzalização se houve erro ou não:
+#       0 - Sucesso
+#       1 - Erro na abertura do arquivo a ser descomprimido
+#       2 - Erro na abertura do arquivo de saída
+#      -1 - Erro na descompressão do arquivo
+#Pré-Condição: Arquivo a ser descomprimido precisa estar devidamente montado
+#Pós-Condição: Descomprime o arquivo 
 def uncompressFile(inputPath, outputPath):
     try:
         inputFile = open(inputPath, mode='rb')
@@ -377,22 +436,14 @@ def uncompressFile(inputPath, outputPath):
         size = inputFile.readline()
         size = str(size)[2:-3]
         size = int(size)
-        # print(size)
         header = {}
-        string = ''
+
         for i in range(size):
             aux = inputFile.readline().decode('ansi')
-            # print(aux)
-            # for byte in aux:
-                
-            #     string += byte
             splitstring = ''.join(aux.split('\n')).split('¨')
             print('str: ' + aux)
-            string = ''
             header[splitstring[1]] = splitstring[0]
-                
-        print(header)
-        
+                        
         buffer = inputFile.read()
         binaryStr = ''
         for byte in buffer:
@@ -430,5 +481,5 @@ def uncompressFile(inputPath, outputPath):
 
 if __name__ == '__main__':
     import sys
-    sys.exit(main(sys.argv))
+    sys.exit(main())
 
