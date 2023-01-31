@@ -22,15 +22,16 @@ def main():
             if fileName == '0':
                 options = -1
             else:
-                buf, flag = readFile(fileName, 0)
+                buf, flag, error = readFile(fileName, 0)
                 if flag == 1:
-                    print('Erro ao abrir arquivo! Aperte qualquer tecla para continuar')
+                    print('Erro ao abrir arquivo!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     input()
                     options = -1
                 elif flag == -1:
-                    print('Erro durante a leitura do arquivo! Aperte qualquer tecla para continuar')
+                    print('Erro durante a leitura do arquivo!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     input()
                     options = -1
+
                 else:
                     print('\nInsira o nome do novo arquivo compactado <------------------------------------> 0 - Para voltar')
                     outputFileName = input()
@@ -41,16 +42,18 @@ def main():
                         list = []
                         processNode(huffman, '', list)
                         result = compressFile(fileName, outputFileName, list, 0)
+                        print('result: ' + str(result))
+                        print(error)
                         if result == 0:
-                            print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                            print('Arquivo compactado com sucesso!\nAperte ENTER para continuar...')
                         elif result == 1:
-                            print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                            print('Erro ao abrir arquivo de entrada!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         elif result == 2:
-                            print('Erro ao abrir arquivo de saída! Aperte qualquer tecla para continuar')
+                            print('Erro ao abrir arquivo de saída!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         elif result == -1:
-                            print('Erro ao tentar compactar arquivo! Aperte qualquer tecla para continuar')
+                            print('Erro ao tentar compactar arquivo!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         else:
-                            print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
+                            print('Um erro inesperado aconteceu!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         input()
                         options = -1
 
@@ -61,11 +64,15 @@ def main():
             if fileName == '0':
                 options = -1
             else:
-                buf, flag = readFile(fileName, 1)
+                buf, flag, error = readFile(fileName, 1)
                 if flag == 1:
-                    print('Erro ao abrir arquivo!')
+                    print('Erro ao abrir arquivo!: ' + repr(error))
+                    input()
+                    options = -1
                 elif flag == -1:
-                    print('Erro durante a leitura do arquivo!')
+                    print('Erro durante a leitura do arquivo!: ' + repr(error))
+                    input()
+                    options = -1
                 else:
                     print('\nInsira o nome do novo arquivo compactado <------------------------------------> 0 - Para voltar')
                     outputFileName = input()
@@ -75,17 +82,17 @@ def main():
                         huffman = createNode(buf)
                         list = []
                         processNode(huffman, '', list)
-                        result = compressFile(fileName, outputFileName, list, 1)
+                        result, error = compressFile(fileName, outputFileName, list, 1)
                         if result == 0:
-                            print('Arquivo compactado com sucesso! Aperte qualquer tecla para continuar')
+                            print('Arquivo compactado com sucesso!\nAperte ENTER para continuar...')
                         elif result == 1:
-                            print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                            print('Erro ao abrir arquivo de entrada!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         elif result == 2:
-                            print('Erro ao abrir arquivo de saída! Aperte qualquer tecla para continuar')
+                            print('Erro ao abrir arquivo de saída!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         elif result == -1:
-                            print('Erro ao tentar compactar arquivo! Aperte qualquer tecla para continuar')
+                            print('Erro ao tentar compactar arquivo!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         else:
-                            print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
+                            print('Um erro inesperado aconteceu!: ' + repr(error) + '\nAperte ENTER para continuar...')
                         input()
                         options = -1
 
@@ -101,17 +108,17 @@ def main():
                 if outputFileName == '0':
                     options = -1
                 else:
-                    result = uncompressFile(fileName, outputFileName)
+                    result, error = uncompressFile(fileName, outputFileName)
                     if result == 0:
-                        print('Arquivo descompactado com sucesso! Aperte qualquer tecla para continuar')
+                        print('Arquivo descompactado com sucesso!\nAperte ENTER para continuar...')
                     elif result == 1:
-                        print('Erro ao abrir arquivo de entrada! Aperte qualquer tecla para continuar')
+                        print('Erro ao abrir arquivo de entrada!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     elif result == 2:
-                        print('Erro ao ler arquivo de saída! Aperte qualquer tecla para continuar')
+                        print('Erro ao ler arquivo de saída!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     elif result == -1:
-                        print('Erro ao descompactar arquivo! Aperte qualquer tecla para continuar')
+                        print('Erro ao descompactar arquivo!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     else:
-                        print('Um erro inesperado aconteceu! Aperte qualquer tecla para continuar')
+                        print('Um erro inesperado aconteceu!: ' + repr(error) + '\nAperte ENTER para continuar...')
                     input()
                     options = -1
 
@@ -215,15 +222,15 @@ def processNode(node, binary, list):
 #   Uma flag que sinaliza se houve erro ou não:
 #       0 - Sucesso
 #       1 - Falha na abertura do arquivo
-#      -1 - Falha na compressão do arquivo 
+#      -1 - Falha na leitura do arquivo 
 #Pré-Condição: Arquivo fonte precisa existir
 #Pós-Condição: Faz a leitura do arquivo e armazena os nós em uma lista
 def readFile(f, wordOrLetter):
     try:
         file = open(f, encoding='utf-8', mode='r')
 
-    except:
-        return [], 1
+    except Exception as error:
+        return [], 1, error
 
     try:
         if wordOrLetter == 0:
@@ -258,18 +265,42 @@ def readFile(f, wordOrLetter):
                 aux = ''.join(line.split('\n')).split(' ')
                 header['@'] += 1
                 for i, word in enumerate(aux):
-                    if i == len(aux)-1:
-                        if word in header.keys():
-                            header[word] += 1
+                    symbols = []
+                    if word != '':
+                        if len(word) > 1:
+                            while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
+                                symbols.append(word[-1:])
+                                word = word[:-1]
+                            if word in header.keys():
+                                header[word] += 1
+                            else:
+                                header[word] = 1
+                            for symbol in symbols:
+                                if symbol in header.keys():
+                                    header[symbol] += 1
+                                else:
+                                    header[symbol] = 1
+                            if i == len(aux)-1:
+                                header[' '] += 1
                         else:
-                            header[word] = 1
-                    else:
-                        if word in header.keys():
-                            header[word] += 1
-                            header[' '] += 1
-                        else:
-                            header[word] = 1
-                            header[' '] += 1
+                            if word in header.keys():
+                                header[word] += 1
+                                header[' '] += 1
+                            else:
+                                header[word] = 1
+                                header[' '] += 1
+                    # if i == len(aux)-1:
+                    #     if word in header.keys():
+                    #         header[word] += 1
+                    #     else:
+                    #         header[word] = 1
+                    # else:
+                    #     if word in header.keys():
+                    #         header[word] += 1
+                    #         header[' '] += 1
+                    #     else:
+                    #         header[word] = 1
+                    #         header[' '] += 1
                 header['@'] += 1
                     # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
                     #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
@@ -295,13 +326,13 @@ def readFile(f, wordOrLetter):
             for word in header.keys():
                 list.append(Node(symbol=word, value=header[word]))
 
-    except:
+    except Exception as error:
         file.close()
-        return [], -1
+        return [], -1, error
 
     file.close()
     
-    return list, 0
+    return list, 0, ''
 
 #Realiza a compressão do arquivo
 #Params:
@@ -322,12 +353,12 @@ def readFile(f, wordOrLetter):
 def compressFile(inputPath, outputPath, list, wordOrLetter):
     try:
         inputFile = open(inputPath, encoding='utf-8', mode='r')
-    except:
-        return 1
+    except Exception as error:
+        return 1, error
     try:
         outputFile = open(outputPath, mode='bw')
-    except: 
-        return 2
+    except Exception as error: 
+        return 2, error
     try:
         size = len(list)
         outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
@@ -363,14 +394,36 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
             string = ''
             for line in buf:
                 aux = ''.join(line.split('\n')).split(' ')
+                print(aux)
                 for i, word in enumerate(aux):
-                    if i == len(aux)-1:
-                        if word in header.keys():
-                            binaryString += header[word]
+                    symbols = []
+                    if word != '':
+                        if len(word) > 1:
+                            while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
+                                symbols.append(word[-1:])
+                                word = word[:-1]
+                            if word in header.keys():
+                                binaryString += header[word]
+                                for symbol in symbols:
+                                    binaryString += header[symbol]
+                                if i != len(aux)-1:
+                                    binaryString += header[' ']
+                        else:
+                            if word in header.keys():
+                                binaryString += header[word]
+                            else:
+                                binaryString += header[word]
+                            if i != len(aux)-1:
+                                    binaryString += header[' ']
                     else:
-                        if word in header.keys():
-                            binaryString += header[word]
-                            binaryString += header[' ']
+                        binaryString += header[' ']
+                    # while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
+                    #     symbols.append(word[-1:])
+                    #     word = word[:-1]
+                    # if word in header.keys():
+                    #     binaryString += header[word]
+                    #     for symbol in symbols:
+                    #         binaryString += header[symbol]
                     # if word == '\n':
                     #     binaryString += header['@']
                     # elif word == ' ':
@@ -397,15 +450,15 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
         outputFile.write(buffer)
 
 
-    except:
+    except Exception as error:
         inputFile.close()
         outputFile.close()
-        return -1
+        return -1, error
 
     inputFile.close()
     outputFile.close()
 
-    return 0
+    return 0, ''
     
 #Realiza a descompressão do arquivo
 #Params:
@@ -423,14 +476,14 @@ def uncompressFile(inputPath, outputPath):
     try:
         inputFile = open(inputPath, mode='rb')
 
-    except:
-        return 1
+    except Exception as error:
+        return 1, error
 
     try:
         outputFile = open(outputPath, encoding='utf-8', mode='w')
 
-    except:
-        return 2
+    except Exception as error:
+        return 2, error
 
     try:
         size = inputFile.readline()
@@ -441,7 +494,6 @@ def uncompressFile(inputPath, outputPath):
         for i in range(size):
             aux = inputFile.readline().decode('ansi')
             splitstring = ''.join(aux.split('\n')).split('¨')
-            print('str: ' + aux)
             header[splitstring[1]] = splitstring[0]
                         
         buffer = inputFile.read()
@@ -456,14 +508,14 @@ def uncompressFile(inputPath, outputPath):
                     else:
                         outputFile.write(header[binaryStr])
                     binaryStr = ''
-    except:
+    except Exception as error:
         inputFile.close()
         outputFile.close()
-        return -1
+        return -1, error
 
     inputFile.close()
     outputFile.close()
-    return 0
+    return 0, ''
 
 # a = readFile("reliquias.txt", 0)
 # b = createNode(a)
