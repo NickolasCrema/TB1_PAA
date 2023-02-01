@@ -17,7 +17,7 @@ def main():
             options = input()
         elif options == '1':
             clear()
-            print('\nInsira o nome do arquivo original <-------------------------------------------> 0 - Para voltar')            # print('0 - Voltar')
+            print('\nInsira o nome do arquivo original <-------------------------------------------> 0 - Para voltar')
             fileName = input()
             if fileName == '0':
                 options = -1
@@ -41,7 +41,7 @@ def main():
                         huffman = createNode(buf)
                         list = []
                         processNode(huffman, '', list)
-                        result = compressFile(fileName, outputFileName, list, 0)
+                        result, error = compressFile(fileName, outputFileName, list, 0)
                         print('result: ' + str(result))
                         print(error)
                         if result == 0:
@@ -131,25 +131,45 @@ def main():
 #Estrutura para representar um nó da árvore
 class Node:
     def __init__(self, symbol, value):
-        self.symbol = symbol
-        self.value = value
-        self.left = None
-        self.right = None
+        self._symbol = symbol
+        self._value = value
+        self._left = None
+        self._right = None
     
     def __repr__(self):
         return f"symbol: {self.symbol}; value: {self.value}"
 
-    def setValue(self, value):
-        self.value = value
+    @property
+    def symbol(self):
+        return self._symbol
     
-    def incValue(self):
-        self.value+=1
+    @symbol.setter
+    def symbol(self, symbol):
+        self._symbol = symbol
     
-    def setLeft(self, left):
-        self.left = left
+    @property 
+    def value(self):
+        return self._value
     
-    def setRight(self, right):
-        self.right = right
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+    @property
+    def left(self):
+        return self._left
+    
+    @left.setter
+    def left(self, left):
+        self._left = left
+    
+    @property
+    def right(self):
+        return self._right
+    
+    @right.setter
+    def right(self, right):
+        self._right = right
 
 #Estrutura para representar os símbolos comprimidos
 class compressedSymbol:
@@ -170,9 +190,9 @@ class compressedSymbol:
 #Pós-Condição: Gera o nó pai
 def fillNode(left, right):
     node = Node(None, 0)
-    node.setLeft(left)
-    node.setRight(right)
-    node.setValue(left.value + right.value)
+    node.left = left
+    node.right = right
+    node.value = left.value + right.value
     return node
 
 #Monta a árvore de acordo com o algoritmo de Huffman
@@ -239,9 +259,8 @@ def readFile(f, wordOrLetter):
             flag = 0
             list.append(Node(str('@'), 0))
             for symbol in buf:
-                # print(symbol)
                 if symbol == '\n':
-                    for s in list:   #TODO ARRUMAR O BARRA N
+                    for s in list:
                         if s.symbol == '@':
                             s.value+=1
                             break
@@ -268,7 +287,7 @@ def readFile(f, wordOrLetter):
                     symbols = []
                     if word != '':
                         if len(word) > 1:
-                            while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
+                            while not word[-1:].isalnum():
                                 symbols.append(word[-1:])
                                 word = word[:-1]
                             if word in header.keys():
@@ -289,40 +308,7 @@ def readFile(f, wordOrLetter):
                             else:
                                 header[word] = 1
                                 header[' '] += 1
-                    # if i == len(aux)-1:
-                    #     if word in header.keys():
-                    #         header[word] += 1
-                    #     else:
-                    #         header[word] = 1
-                    # else:
-                    #     if word in header.keys():
-                    #         header[word] += 1
-                    #         header[' '] += 1
-                    #     else:
-                    #         header[word] = 1
-                    #         header[' '] += 1
                 header['@'] += 1
-                    # if word != '' and word != '\n' and word != ' ' and len(word) > 1:
-                    #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:
-                    #         if word[-1:] in header.keys():
-                    #             header[word[-1:]] += 1
-                    #         else:
-                    #             header[word[-1:]] = 1
-                    #         word = word[:-1]
-                    #     if word in header.keys():
-                    #         header[word] += 1
-                    #     else:
-                    #         header[word] = 1     TODO SE TIVER SACO EU USO ISSO
-                    # elif word == ' ':
-                    #     header[' '] += 1
-                    # elif word == '\n':
-                    #     header['@'] += 1
-                    # else:
-                    #     if word in header.keys():
-                    #         header[word] += 1
-                    #     else:
-                    #         header[word] = 1
-
             for word in header.keys():
                 list.append(Node(symbol=word, value=header[word]))
 
@@ -351,14 +337,17 @@ def readFile(f, wordOrLetter):
 #Pré-Condição: Sucesso na codificação da árvore
 #Pós-Condição: Comprime o arquivo
 def compressFile(inputPath, outputPath, list, wordOrLetter):
+
     try:
         inputFile = open(inputPath, encoding='utf-8', mode='r')
     except Exception as error:
         return 1, error
+
     try:
         outputFile = open(outputPath, mode='bw')
     except Exception as error: 
         return 2, error
+
     try:
         size = len(list)
         outputFile.write(bytes(str(size) + '\n', encoding='utf-8'))
@@ -374,7 +363,6 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
             header[symbol.symbol] = symbol.binary
             outputFile.write(string)
         binaryString = ''
-
         if wordOrLetter == 0:
             buf = inputFile.read()
             for letter in buf:
@@ -384,7 +372,6 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
                     binaryString += header[letter]
             buffer = bytearray()
             i = 0
-            
             while i < len(binaryString):
                 buffer.append(int(binaryString[i:i+8], base=2))
                 i += 8
@@ -394,7 +381,6 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
             string = ''
             for line in buf:
                 aux = ''.join(line.split('\n')).split(' ')
-                print(aux)
                 for i, word in enumerate(aux):
                     symbols = []
                     if word != '':
@@ -417,29 +403,7 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
                                     binaryString += header[' ']
                     else:
                         binaryString += header[' ']
-                    # while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
-                    #     symbols.append(word[-1:])
-                    #     word = word[:-1]
-                    # if word in header.keys():
-                    #     binaryString += header[word]
-                    #     for symbol in symbols:
-                    #         binaryString += header[symbol]
-                    # if word == '\n':
-                    #     binaryString += header['@']
-                    # elif word == ' ':
-                    #     binaryString += header[' ']
-                    # elif word != ' ' and word != '\n' and word != '' and len(word) > 1:
-                    #     while ord(word[-1:]) < 48 or (ord(word[-1:]) > 57 and ord(word[-1:]) < 65) or (ord(word[-1:]) > 90 and ord(word[-1:]) < 97) or (ord(word[-1:]) > 122 and ord(word[-1:]) < 192) or ord(word[-1:]) > 256:   
-                    #         binaryString += header[word[-1:]]
-                    #         word = word[:-1]
-                    #     if word in header.keys():
-                    #         binaryString += header[word]
-                    #         binaryString += header[' ']   TODO SE TIVER SACO EU USO ISSO
-                    # else:
-                    #     if word in header.keys():
-                    #         binaryString += header[word]
-                    #         binaryString += header[' ']
-                
+
                 binaryString += header['@']
             
             buffer = bytearray()
@@ -447,8 +411,8 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
             while i < len(binaryString):
                 buffer.append(int(binaryString[i:i+8], base=2))
                 i+=8
-        outputFile.write(buffer)
 
+        outputFile.write(buffer)
 
     except Exception as error:
         inputFile.close()
@@ -465,7 +429,7 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
 #   inputPath: Caminho do arquivo a ser descomprimido
 #   outputPath: Caminho destinado ao arquivo de saída
 #Return:
-#   Retorna um inteiro para sinzalização se houve erro ou não:
+#   Retorna um inteiro para sinalização se houve erro ou não:
 #       0 - Sucesso
 #       1 - Erro na abertura do arquivo a ser descomprimido
 #       2 - Erro na abertura do arquivo de saída
@@ -473,15 +437,14 @@ def compressFile(inputPath, outputPath, list, wordOrLetter):
 #Pré-Condição: Arquivo a ser descomprimido precisa estar devidamente montado
 #Pós-Condição: Descomprime o arquivo 
 def uncompressFile(inputPath, outputPath):
+
     try:
         inputFile = open(inputPath, mode='rb')
-
     except Exception as error:
         return 1, error
 
     try:
         outputFile = open(outputPath, encoding='utf-8', mode='w')
-
     except Exception as error:
         return 2, error
 
@@ -490,12 +453,10 @@ def uncompressFile(inputPath, outputPath):
         size = str(size)[2:-3]
         size = int(size)
         header = {}
-
         for i in range(size):
             aux = inputFile.readline().decode('ansi')
             splitstring = ''.join(aux.split('\n')).split('¨')
-            header[splitstring[1]] = splitstring[0]
-                        
+            header[splitstring[1]] = splitstring[0]       
         buffer = inputFile.read()
         binaryStr = ''
         for byte in buffer:
@@ -508,6 +469,7 @@ def uncompressFile(inputPath, outputPath):
                     else:
                         outputFile.write(header[binaryStr])
                     binaryStr = ''
+
     except Exception as error:
         inputFile.close()
         outputFile.close()
@@ -517,21 +479,6 @@ def uncompressFile(inputPath, outputPath):
     outputFile.close()
     return 0, ''
 
-# a = readFile("reliquias.txt", 0)
-# b = createNode(a)
-# list = []
-# processNode(b, '', list)
-# compressFile("reliquias.txt", "reliquiasComprimida.bin", list, 0)
-# uncompressFile('reliquiasComprimida.bin', 'reliquiasDescomprimidas.txt', 0)
-
-# a = readFile("arquivogerado.txt", 1)
-# b = createNode(a)
-# list = []
-# processNode(b, '', list)
-# compressFile("arquivogerado.txt", "arquivogeradoComprimida.bin", list, 1)
-# uncompressFile('arquivogeradoComprimida.bin', 'arquivogeradoDescomprimidas.txt', 1)
-
 if __name__ == '__main__':
     import sys
     sys.exit(main())
-
